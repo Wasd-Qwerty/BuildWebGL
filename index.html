@@ -182,8 +182,27 @@
 
       const start = () => {
         // Настоящий fullscreen можно только по клику/тапу
-        try { unityInstanceRef.SetFullscreen(1); } catch (e) {}
-        overlay.style.display = "none";
+        const tryFullscreen = async () => {
+          // Если окружение запрещает fullscreen (часто Telegram webview) — просто выходим
+          if (!document.fullscreenEnabled) return false;
+
+          try {
+            const el = canvas; // можно и unity-container
+            const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+            if (!req) return false;
+
+            await req.call(el);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        };
+
+        const start = async () => {
+          overlay.style.display = "none";
+          await tryFullscreen(); // если нельзя — ничего страшного, игра просто останется на весь экран страницы
+          canvas.focus();
+        };
       };
 
       document.querySelector("#start-button").addEventListener("click", start, { once: true });
